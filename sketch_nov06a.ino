@@ -21,8 +21,8 @@ void setup() {
   Serial.begin(9600); //usb baud rate
   BT.begin(9600); //bluetooth baud rate
   mysevro.attach(9, 500, 2400); //馬達讀取PIN9 , 修正PWM訊號寬度 500,2400
-  pinMode(IR_SensorTOP, INPUT); //IR1 inpute
-  pinMode(IR_SensorBOT, INPUT); //IR2 inpute
+  pinMode(IR_SensorTOP, INPUT); //IR1 input
+  pinMode(IR_SensorBOT, INPUT); //IR2 input
 
   Wire.begin(); // I2C debug
   if (lightMeter1.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) { // light sensor 初始化
