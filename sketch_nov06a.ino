@@ -2,25 +2,25 @@
 #include <Wire.h> //I2C library
 #include <BH1750.h> //Light sensor library
 #include <SoftwareSerial.h> //BT library
-char num; // 定義 num = 字元
+char num; // num = 字元
 
 BH1750 lightMeter1(0x23); // I2C address
 BH1750 lightMeter2(0x5c); // I2C address
 SoftwareSerial BT(10, 11); // RX , TX
-Servo mysevro; //宣告 sevro = mysevro
+Servo mysevro; // sevro = mysevro
 
 int IR_SensorTOP = 6; //上層紅外線偵測PIN6
 int IR_SensorBOT = 7; //底部紅外線偵測PIN7
 
-int downState = 1; //紅外線開關狀態
+int downState = 0; //紅外線開關狀態
 int upState = 0; //紅外線開關狀態
 
-int Auto = 0; // 0 = 手動 , 1 = 自動
+int Auto = 0; // 0 = 手動 , 1 = 自動 , 2 = clock mode
 
 void setup() {
   Serial.begin(9600); //usb baud rate
   BT.begin(9600); //bluetooth baud rate
-  mysevro.attach(9, 500, 2400); //馬達讀取PIN9 , 修正PWM訊號寬度 500,2400
+  mysevro.attach(9); //馬達讀取PIN9 , 修正PWM訊號寬度 500,2400
   pinMode(IR_SensorTOP, INPUT); //IR1 input
   pinMode(IR_SensorBOT, INPUT); //IR2 input
 
@@ -29,23 +29,24 @@ void setup() {
     Serial.println(F("BH1750 Advanced begin-lux1")); 
   }
   else {
-    Serial.println(F("Error initialising - LuxSensor1 missing")); //錯誤
+    Serial.println(F("Error initialising - LuxSensor1 missing")); //error
   }
   if (lightMeter2.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) { // light sensor 初始化
     Serial.println(F("BH1750 Advanced begin-lux2"));
   }
   else {
-    Serial.println(F("Error initialising - LuxSensor2 missing")); //錯誤
+    Serial.println(F("Error initialising - LuxSensor2 missing")); //error
   }
 
 }
 void loop() {
-  float lux1 = lightMeter1.readLightLevel(); // 浮點數 lightMeter1 = lux1讀取
-  float lux2 = lightMeter2.readLightLevel(); // 浮點數 lightMeter1 = lux2讀取
+  float lux1 = lightMeter1.readLightLevel(); // 浮點數 lightMeter1 = lux1
+  float lux2 = lightMeter2.readLightLevel(); // 浮點數 lightMeter1 = lux2
+  float lux1Balance = lux1+100;
   //lux1 = 100;
   //lux2 = 500;
-  int x1 = digitalRead(IR_SensorTOP); //定義x1 = 上層紅外線開關
-  int x2 = digitalRead(IR_SensorBOT); //定義x2 = 底部紅外線開關
+  int x1 = digitalRead(IR_SensorTOP); //x1 = 上層紅外線開關
+  int x2 = digitalRead(IR_SensorBOT); //x2 = 底部紅外線開關
   
   Serial.println("Begining loop");
   Serial.print("x1 ="); Serial.println(x1);
@@ -61,55 +62,67 @@ void loop() {
   Serial.println("===================");
 
   delay(1000);
-  //================Auto IR decide====================
+  //================Servo Limit=====================
   
-  if (Auto == 1 & downState == 1)
-  {
+  if (Auto == 1 & downState == 1) {
     if (x2 == 0) { //底部紅外線輸出 = 0 , 停止馬達
       Serial.println("AutoStop");
-      //Auto = 0;
       mysevro.write(90); //停止馬達
-      return;
+      //return;
     }
 
   }
-  if (Auto == 1 & upState == 1)
-  {
+  else if (Auto == 1 & upState == 1) {
     if (x1 == 1) { //上層紅外線輸出 = 1 , 停止馬達
       Serial.println("AutoStop");
-      //Auto = 0;
       mysevro.write(90); //停止馬達
-      return;
+      //return;
+    }
+  }
+
+  else if (Auto == 2 & upState == 1) { // clock mode
+    if (x1 == 1) { //上層紅外線輸出 = 1 , 停止馬達
+      Serial.println("AutoStop");
+      mysevro.write(90); //停止馬達
+      delay(1000);
+      Auto = 0; //切回手動
+      upState = 0;
+      //return;
     }
 
   }
 
-  //====================Auto==========================
+  //=======================Auto=======================
 
   if (Auto == 1) {
 
-    if (abs(lux1 - lux2) <= 30) {
+    if (abs(lux1Balance-lux2) <= 50) { // 絕對值(室內+100 - 室外) <= 50
       mysevro.write(90);
       delay(1000);
 
     }
-    else if (lux1 + 50 < lux2) {
+    else if (lux1+270 < lux2) { // 室內+270 < 室外
       mysevro.write(102.5);
       Serial.print("AutoDown");
       downState = 1;
       delay(200);
 
     }
-    else {
+    else if (lux1+70 <= 400) { // 室內+70 <=400
       mysevro.write(87);
       Serial.print("AutoUp");
       upState = 1;
       delay(200);
 
     }
-
+    else if (lux2 <= 400) { // 室外 <= 400
+      mysevro.write(102.5);
+      Serial.print("AutoDown");
+      downState = 1;
+      delay(200);
+   
+    }
   }
-
 
   //====================Switch========================
 
@@ -119,7 +132,7 @@ void loop() {
       num = Serial.read(); */
 
   if (BT.available() > 0) { 
-    num = BT.read(); // 藍芽字元讀取
+    num = BT.read(); // 讀取字元
     Serial.print("num = "); Serial.println(num);
 
     if (num == 97) { // "a"
@@ -128,26 +141,37 @@ void loop() {
     }
 
 
-    if (num == 98) { // "b"
+    else if (num == 98) { // "b"
       Auto = 0;
+      upState = 0;
+      downState = 0;
       delay(200);
     }
 
 
-    if (num == 99) { // "c"
-      mysevro.write(102.5); //下降
+    else if (num == 99) { // "c"
+      mysevro.write(101); //下降
       Serial.println("down");
       delay(200);
     }
 
-    if (num == 100) { // "d"
-      mysevro.write(87); //上升
+    else if (num == 100) { // "d"
+      mysevro.write(0); //上升
       Serial.println("up");
       delay(200);
     }
 
-    if (num == 101) { // "e"
+    else if (num == 101) { // "e"
       mysevro.write(90); //停止
     }
+
+    else if (num == 102) { //"f"
+      Auto = 2; // clock mode
+      mysevro.write(87); //上升
+      upState = 1;
+      delay(200);
+    }
+    
   }
-}
+
+  }
