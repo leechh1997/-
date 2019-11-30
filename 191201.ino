@@ -123,10 +123,6 @@ void loop() {
   //====================Switch========================
 
 
-  /*  if (Serial.available() > 0) {
-      int num = Serial.parseInt();
-      num = Serial.read(); */
-
   if (BT.available() > 0) { 
     num = BT.read(); // 讀取字元
     Serial.print("num = "); Serial.println(num);
