@@ -42,6 +42,9 @@ void setup() {
 void loop() {
   float lux1 = lightMeter1.readLightLevel(); // 浮點數 lightMeter1 = lux1
   float lux2 = lightMeter2.readLightLevel(); // 浮點數 lightMeter1 = lux2
+  float lux1Balance = lux1+100;
+  //lux1 = 100;
+  //lux2 = 500;
   int x1 = digitalRead(IR_SensorTOP); //x1 = 上層紅外線開關
   int x2 = digitalRead(IR_SensorBOT); //x2 = 底部紅外線開關
   
@@ -53,6 +56,7 @@ void loop() {
   Serial.print("downState ="); Serial.println(downState);
   Serial.print("upState ="); Serial.println(upState);
   Serial.print("Auto ="); Serial.println(Auto);
+  //  Serial.println((downState == 1) && (x2 == 0));
   Serial.println("===================");
   Serial.print("numBT ="); Serial.println(BT.available());
   Serial.println("===================");
@@ -64,7 +68,7 @@ void loop() {
     if (x2 == 0) { //底部紅外線輸出 = 0 , 停止馬達
       Serial.println("AutoStop");
       mysevro.write(90); //停止馬達
-      return;
+      //return ;
     }
 
   }
@@ -72,7 +76,7 @@ void loop() {
     if (x1 == 1) { //上層紅外線輸出 = 1 , 停止馬達
       Serial.println("AutoStop");
       mysevro.write(90); //停止馬達
-      return;
+      //return ;
     }
   }
 
@@ -83,7 +87,7 @@ void loop() {
       delay(1000);
       Auto = 0; //切回手動
       upState = 0;
-      return;
+      //return ;
     }
 
   }
@@ -92,7 +96,7 @@ void loop() {
 
   if (Auto == 1) {
 
-    if (abs(lux+100-lux2) <= 50) { // 絕對值(室內+100 - 室外) <= 50
+    if (abs(lux1+100-lux2) <= 50) { // 絕對值(室內+100 - 室外) <= 50
       mysevro.write(90);
       delay(1000);
 
@@ -122,6 +126,10 @@ void loop() {
 
   //====================Switch========================
 
+
+  /*  if (Serial.available() > 0) {
+      int num = Serial.parseInt();
+      num = Serial.read(); */
 
   if (BT.available() > 0) { 
     num = BT.read(); // 讀取字元
