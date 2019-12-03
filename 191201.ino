@@ -42,7 +42,6 @@ void setup() {
 void loop() {
   float lux1 = lightMeter1.readLightLevel(); // 浮點數 lightMeter1 = lux1
   float lux2 = lightMeter2.readLightLevel(); // 浮點數 lightMeter1 = lux2
-  float lux1Balance = lux1+100;
   //lux1 = 100;
   //lux2 = 500;
   int x1 = digitalRead(IR_SensorTOP); //x1 = 上層紅外線開關
