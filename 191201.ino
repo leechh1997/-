@@ -68,7 +68,7 @@ void loop() {
     if (x2 == 0) { //底部紅外線輸出 = 0 , 停止馬達
       Serial.println("AutoStop");
       mysevro.write(90); //停止馬達
-      //return ;
+      return ;
     }
 
   }
@@ -76,7 +76,7 @@ void loop() {
     if (x1 == 1) { //上層紅外線輸出 = 1 , 停止馬達
       Serial.println("AutoStop");
       mysevro.write(90); //停止馬達
-      //return ;
+      return ;
     }
   }
 
@@ -87,7 +87,7 @@ void loop() {
       delay(1000);
       Auto = 0; //切回手動
       upState = 0;
-      //return ;
+      return ;
     }
 
   }
