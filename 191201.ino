@@ -114,6 +114,7 @@ void loop()
     else if (num == 101)
     {                    // "e"
       mysevro.write(90); //停止
+      delay(200);
     }
 
     else if (num == 102)
